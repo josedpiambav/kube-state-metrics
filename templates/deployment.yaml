@@ -339,9 +339,9 @@ spec:
       {{- with .Values.containers }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
-{{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- include "kube-state-metrics.imagePullSecrets" (dict "Values" .Values "imagePullSecrets" .Values.imagePullSecrets) | indent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- if .Values.affinity }}
       affinity:
