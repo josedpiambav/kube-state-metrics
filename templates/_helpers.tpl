@@ -137,3 +137,25 @@ The name of the ConfigMap for the customResourceState config.
     {{- template "kube-state-metrics.fullname" . }}-customresourcestate-config
   {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Prometheus Scrape Annotations
+*/}}
+{{- define "kube-state-metrics.prometheusScrapeAnnotations" -}}
+  {{- if .Values.prometheusScrape.enabled }}
+    {{- range $key, $value := .Values.prometheusScrape.annotations }}
+      {{ $key }}: {{ tpl $value $ | quote }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Return the proper Prometheus Scrape Labels
+*/}}
+{{- define "kube-state-metrics.prometheusScrapeLabels" -}}
+  {{- if .Values.prometheusScrape.enabled }}
+  {{- with .Values.prometheusScrape.labels }}
+    {{- toYaml . }}
+  {{- end }}
+  {{- end }}
+{{- end -}}

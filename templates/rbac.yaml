@@ -3,13 +3,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "kube-state-metrics.serviceAccountName" . }}
-  namespace: {{ include "kube-state-metrics.namespace" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | nindent 4 }}
   {{- with .Values.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  namespace: {{ include "kube-state-metrics.namespace" . }}
 automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
 {{- end -}}
 
@@ -235,7 +235,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "kube-state-metrics.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ include "alertmanager.namespace" . }}
 {{- end -}}
 
 {{- if and .Values.serviceAccount.rbac.create .Values.sharding.enabled }}
@@ -244,9 +244,13 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ include "kube-state-metrics.fullname" . }}-sharding
-  namespace: {{ include "kube-state-metrics.namespace" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.rbac.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  namespace: {{ include "kube-state-metrics.namespace" . }}
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -259,6 +263,11 @@ metadata:
   namespace: {{ include "kube-state-metrics.namespace" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.rbac.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  namespace: {{ include "kube-state-metrics.namespace" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
