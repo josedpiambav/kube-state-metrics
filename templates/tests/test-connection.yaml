@@ -5,16 +5,39 @@ metadata:
   name: "{{ include "kube-state-metrics.fullname" . }}-test-connection"
   labels:
     {{- include "kube-state-metrics.labels" . | nindent 4 }}
-  {{- with .Values.testFramework.annotations }}
+    app.kubernetes.io/name: {{ include "kube-state-metrics.name" . }}-test
   annotations:
+    "helm.sh/hook-weight": "0"
+    {{- with .Values.testFramework.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
-  namespace: {{ include "alertmanager.namespace" . }}
+    {{- end }}
 spec:
   containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "kube-state-metrics.fullname" . }}:{{ .Values.service.port }}']
+  - name: test-connection
+    image: busybox
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -ex
+        echo "Testing connection to kube-state-metrics service..."
+        
+        # Test HTTP connectivity to metrics endpoint
+        if nc -z -w 5 {{ include "kube-state-metrics.fullname" . }} {{ .Values.service.port }}; then
+          echo "✅ Successfully connected to service on port {{ .Values.service.port }}"
+        else
+          echo "❌ Failed to connect to service on port {{ .Values.service.port }}"
+          exit 1
+        fi
+
+        # Test metrics endpoint response
+        if wget -q -O- -T 5 http://{{ include "kube-state-metrics.fullname" . }}:{{ .Values.service.port }}/metrics | head -5 | grep -q "kube_"; then
+          echo "✅ Metrics endpoint is responding with valid data"
+        else
+          echo "❌ Metrics endpoint not returning expected data"
+          exit 1
+        fi
+
+        echo "✅ All connection tests passed!"
   restartPolicy: Never
 {{- end }}

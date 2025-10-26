@@ -1,1290 +1,1382 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "kube-state-metrics",
-    "description": "kube-state-metrics is a simple service that listens to the Kubernetes API server and generates metrics about the state of the objects with enhanced security and flexible configuration.",
-    "type": "object",
-    "definitions": {
-        "image": {
-            "description": "Container image parameters.",
-            "type": "object",
-            "properties": {
-                "registry": {
-                    "description": "Image registry.",
-                    "type": "string",
-                    "default": "registry.k8s.io"
-                },
-                "repository": {
-                    "description": "Image repository.",
-                    "type": "string",
-                    "default": "kube-state-metrics/kube-state-metrics"
-                },
-                "tag": {
-                    "description": "Image tag. Defaults to appVersion with 'v' prefix.",
-                    "type": "string",
-                    "default": ""
-                },
-                "pullPolicy": {
-                    "description": "Image pull policy.",
-                    "type": "string",
-                    "enum": ["Never", "IfNotPresent", "Always"],
-                    "default": "IfNotPresent"
-                }
-            }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "kube-state-metrics",
+  "description": "kube-state-metrics is a simple service that listens to the Kubernetes API server and generates metrics about the state of the objects with enhanced security and flexible configuration.",
+  "type": "object",
+  "definitions": {
+    "image": {
+      "description": "Container image parameters.",
+      "type": "object",
+      "properties": {
+        "registry": {
+          "description": "Image registry.",
+          "type": "string",
+          "default": "registry.k8s.io"
         },
-        "resources": {
-            "description": "Resource limits and requests for the Container.",
-            "type": "object",
-            "properties": {
-                "limits": {
-                    "description": "Resource limits for the Container.",
-                    "type": "object",
-                    "properties": {
-                        "cpu": {
-                            "type": "string"
-                        },
-                        "memory": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "requests": {
-                    "description": "Resource requests for the Container.",
-                    "type": "object",
-                    "properties": {
-                        "cpu": {
-                            "type": "string"
-                        },
-                        "memory": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
+        "repository": {
+          "description": "Image repository.",
+          "type": "string",
+          "default": "kube-state-metrics/kube-state-metrics"
         },
-        "securityContext": {
-            "description": "Security context for the container with enhanced security defaults.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsNonRoot": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsUser": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "runAsGroup": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "fsGroup": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "seccompProfile": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["RuntimeDefault", "Unconfined", "Localhost"],
-                            "default": "RuntimeDefault"
-                        }
-                    }
-                }
-            }
+        "tag": {
+          "description": "Image tag. Defaults to appVersion with 'v' prefix.",
+          "type": "string",
+          "default": ""
         },
-        "podSecurityContext": {
-            "description": "Pod security context configuration with enhanced security defaults.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsNonRoot": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsUser": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "runAsGroup": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "fsGroup": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "fsGroupChangePolicy": {
-                    "type": "string",
-                    "enum": ["OnRootMismatch", "Always"],
-                    "default": "OnRootMismatch"
-                },
-                "seccompProfile": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["RuntimeDefault", "Unconfined", "Localhost"],
-                            "default": "RuntimeDefault"
-                        }
-                    }
-                }
-            }
-        },
-        "containerSecurityContext": {
-            "description": "Container security context with enhanced security defaults.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsNonRoot": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "runAsUser": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "runAsGroup": {
-                    "type": "integer",
-                    "default": 1000
-                },
-                "readOnlyRootFilesystem": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "allowPrivilegeEscalation": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "capabilities": {
-                    "type": "object",
-                    "properties": {
-                        "drop": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "default": ["ALL"]
-                        }
-                    }
-                },
-                "seccompProfile": {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["RuntimeDefault", "Unconfined", "Localhost"],
-                            "default": "RuntimeDefault"
-                        }
-                    }
-                }
-            }
-        },
-        "httpGetProbe": {
-            "description": "HTTP GET probe configuration",
-            "type": "object",
-            "properties": {
-                "httpHeaders": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    },
-                    "default": []
-                },
-                "scheme": {
-                    "type": "string",
-                    "enum": ["http", "https"],
-                    "default": "http"
-                }
-            }
-        },
-        "probe": {
-            "description": "Kubernetes probe configuration",
-            "type": "object",
-            "properties": {
-                "failureThreshold": {
-                    "type": "integer",
-                    "default": 3
-                },
-                "httpGet": {
-                    "$ref": "#/definitions/httpGetProbe"
-                },
-                "initialDelaySeconds": {
-                    "type": "integer",
-                    "default": 5
-                },
-                "periodSeconds": {
-                    "type": "integer",
-                    "default": 10
-                },
-                "successThreshold": {
-                    "type": "integer",
-                    "default": 1
-                },
-                "timeoutSeconds": {
-                    "type": "integer",
-                    "default": 5
-                }
-            }
+        "pullPolicy": {
+          "description": "Image pull policy.",
+          "type": "string",
+          "enum": [
+            "Never",
+            "IfNotPresent",
+            "Always"
+          ],
+          "default": "IfNotPresent"
         }
+      }
     },
-    "properties": {
-        "replicaCount": {
-            "description": "Number of desired pods.",
-            "type": "integer",
-            "default": 1,
-            "minimum": 1
-        },
-        "revisionHistoryLimit": {
-            "description": "Number of old history to retain to allow rollback.",
-            "type": "integer",
-            "default": 10,
-            "minimum": 0
-        },
-        "image": {
-            "description": "Container image parameters.",
-            "$ref": "#/definitions/image"
-        },
-        "prometheusScrape": {
-            "description": "Prometheus scraping configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "default": {
-                        "prometheus.io/scrape": "true",
-                        "prometheus.io/port": "8080",
-                        "prometheus.io/path": "/metrics",
-                        "prometheus.io/scheme": "http"
-                    }
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
+    "resources": {
+      "description": "Resource limits and requests for the Container.",
+      "type": "object",
+      "properties": {
+        "limits": {
+          "description": "Resource limits for the Container.",
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
             }
+          }
         },
-        "autosharding": {
-            "description": "Auto-sharding configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                }
+        "requests": {
+          "description": "Resource requests for the Container.",
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
             }
+          }
+        }
+      }
+    },
+    "securityContext": {
+      "description": "Security context for the container with enhanced security defaults.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "integer",
+          "default": 1000
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "default": 1000
+        },
+        "fsGroup": {
+          "type": "integer",
+          "default": 1000
+        },
+        "seccompProfile": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RuntimeDefault",
+                "Unconfined",
+                "Localhost"
+              ],
+              "default": "RuntimeDefault"
+            }
+          }
+        }
+      }
+    },
+    "podSecurityContext": {
+      "description": "Pod security context configuration with enhanced security defaults.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "integer",
+          "default": 1000
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "default": 1000
+        },
+        "fsGroup": {
+          "type": "integer",
+          "default": 1000
+        },
+        "fsGroupChangePolicy": {
+          "type": "string",
+          "enum": [
+            "OnRootMismatch",
+            "Always"
+          ],
+          "default": "OnRootMismatch"
+        },
+        "seccompProfile": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RuntimeDefault",
+                "Unconfined",
+                "Localhost"
+              ],
+              "default": "RuntimeDefault"
+            }
+          }
+        }
+      }
+    },
+    "containerSecurityContext": {
+      "description": "Container security context with enhanced security defaults.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "integer",
+          "default": 1000
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "default": 1000
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "default": false
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "ALL"
+              ]
+            }
+          }
+        },
+        "seccompProfile": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RuntimeDefault",
+                "Unconfined",
+                "Localhost"
+              ],
+              "default": "RuntimeDefault"
+            }
+          }
+        }
+      }
+    },
+    "httpGetProbe": {
+      "description": "HTTP GET probe configuration",
+      "type": "object",
+      "properties": {
+        "httpHeaders": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "http"
+        }
+      }
+    },
+    "probe": {
+      "description": "Kubernetes probe configuration",
+      "type": "object",
+      "properties": {
+        "failureThreshold": {
+          "type": "integer",
+          "default": 3
+        },
+        "httpGet": {
+          "$ref": "#/definitions/httpGetProbe"
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "default": 5
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "default": 10
+        },
+        "successThreshold": {
+          "type": "integer",
+          "default": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 5
+        }
+      }
+    }
+  },
+  "properties": {
+    "replicaCount": {
+      "description": "Number of desired pods.",
+      "type": "integer",
+      "default": 1,
+      "minimum": 1
+    },
+    "revisionHistoryLimit": {
+      "description": "Number of old history to retain to allow rollback.",
+      "type": "integer",
+      "default": 10,
+      "minimum": 0
+    },
+    "image": {
+      "description": "Container image parameters.",
+      "$ref": "#/definitions/image"
+    },
+    "prometheusScrape": {
+      "description": "Prometheus scraping configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
         },
         "annotations": {
-            "description": "Annotations to be added to the deployment/statefulset",
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "prometheus.io/scrape": "true",
+            "prometheus.io/port": "8080",
+            "prometheus.io/path": "/metrics",
+            "prometheus.io/scheme": "http"
+          }
         },
         "labels": {
-            "description": "Labels to be added to the deployment/statefulset",
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "autosharding": {
+      "description": "Auto-sharding configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "annotations": {
+      "description": "Annotations to be added to the deployment/statefulset",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "labels": {
+      "description": "Labels to be added to the deployment/statefulset",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podManagementPolicy": {
+      "description": "Pod management policy for StatefulSet.",
+      "type": "string",
+      "enum": [
+        "OrderedReady",
+        "Parallel"
+      ],
+      "default": "OrderedReady"
+    },
+    "updateStrategy": {
+      "description": "Update strategy configuration.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "RollingUpdate",
+            "Recreate"
+          ],
+          "default": "RollingUpdate"
         },
-        "podManagementPolicy": {
-            "description": "Pod management policy for StatefulSet.",
-            "type": "string",
-            "enum": ["OrderedReady", "Parallel"],
-            "default": "OrderedReady"
-        },
-        "updateStrategy": {
-            "description": "Update strategy configuration.",
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": ["RollingUpdate", "Recreate"],
-                    "default": "RollingUpdate"
-                },
-                "rollingUpdate": {
-                    "type": "object",
-                    "properties": {
-                        "maxSurge": {
-                            "type": ["integer", "string"],
-                            "default": 1
-                        },
-                        "maxUnavailable": {
-                            "type": ["integer", "string"],
-                            "default": 0
-                        }
-                    }
-                }
+        "rollingUpdate": {
+          "type": "object",
+          "properties": {
+            "maxSurge": {
+              "type": [
+                "integer",
+                "string"
+              ],
+              "default": 1
+            },
+            "maxUnavailable": {
+              "type": [
+                "integer",
+                "string"
+              ],
+              "default": 0
             }
+          }
+        }
+      }
+    },
+    "extraArgs": {
+      "description": "Additional CLI arguments for kube-state-metrics.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "imagePullSecrets": {
+      "description": "Image pull secrets.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "nameOverride": {
+      "description": "Override the name of the chart.",
+      "type": "string",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "description": "Override the full name of the chart.",
+      "type": "string",
+      "default": ""
+    },
+    "namespaceOverride": {
+      "description": "Override deployment namespace.",
+      "type": "string",
+      "default": ""
+    },
+    "serviceAccount": {
+      "description": "Service account configuration.",
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": true
+        },
+        "name": {
+          "type": "string",
+          "default": ""
+        },
+        "automount": {
+          "type": "boolean",
+          "default": true
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rbac": {
+      "description": "RBAC configuration.",
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": true
+        },
+        "useExistingRole": {
+          "type": "string"
+        },
+        "useClusterRole": {
+          "type": "boolean",
+          "default": true
+        },
+        "extraRules": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        }
+      }
+    },
+    "securityContext": {
+      "description": "Pod security context (legacy).",
+      "$ref": "#/definitions/securityContext"
+    },
+    "podSecurityContext": {
+      "description": "Pod security context.",
+      "$ref": "#/definitions/podSecurityContext"
+    },
+    "containerSecurityContext": {
+      "description": "Container security context.",
+      "$ref": "#/definitions/containerSecurityContext"
+    },
+    "service": {
+      "description": "Service configuration.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer",
+            "ExternalName"
+          ],
+          "default": "ClusterIP"
+        },
+        "port": {
+          "type": "integer",
+          "default": 8080
+        },
+        "telemetryPort": {
+          "type": "integer",
+          "default": 8081
+        },
+        "metricsPath": {
+          "type": "string",
+          "default": "/metrics"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "clusterIP": {
+          "type": "string",
+          "default": ""
+        },
+        "loadBalancerIP": {
+          "type": "string",
+          "default": ""
+        },
+        "loadBalancerSourceRanges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "nodePort": {
+          "type": "integer",
+          "default": 0
+        },
+        "ipDualStack": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "ipFamilies": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "IPv4",
+                  "IPv6"
+                ]
+              },
+              "default": [
+                "IPv6",
+                "IPv4"
+              ]
+            },
+            "ipFamilyPolicy": {
+              "type": "string",
+              "enum": [
+                "SingleStack",
+                "PreferDualStack",
+                "RequireDualStack"
+              ],
+              "default": "PreferDualStack"
+            }
+          }
+        }
+      }
+    },
+    "hostNetwork": {
+      "description": "Use host network.",
+      "type": "boolean",
+      "default": false
+    },
+    "kubeRBACProxy": {
+      "description": "kube-rbac-proxy configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string",
+              "default": "quay.io"
+            },
+            "repository": {
+              "type": "string",
+              "default": "brancz/kube-rbac-proxy"
+            },
+            "tag": {
+              "type": "string",
+              "default": "v0.19.1"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": [
+                "Never",
+                "IfNotPresent",
+                "Always"
+              ],
+              "default": "IfNotPresent"
+            }
+          }
+        },
+        "ignoreProbePaths": {
+          "type": "boolean",
+          "default": true
         },
         "extraArgs": {
-            "description": "Additional CLI arguments for kube-state-metrics.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": []
-        },
-        "imagePullSecrets": {
-            "description": "Image pull secrets.",
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    }
-                }
-            },
-            "default": []
-        },
-        "nameOverride": {
-            "description": "Override the name of the chart.",
-            "type": "string",
-            "default": ""
-        },
-        "fullnameOverride": {
-            "description": "Override the full name of the chart.",
-            "type": "string",
-            "default": ""
-        },
-        "namespaceOverride": {
-            "description": "Override deployment namespace.",
-            "type": "string",
-            "default": ""
-        },
-        "serviceAccount": {
-            "description": "Service account configuration.",
-            "type": "object",
-            "properties": {
-                "create": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "name": {
-                    "type": "string",
-                    "default": ""
-                },
-                "automount": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "rbac": {
-            "description": "RBAC configuration.",
-            "type": "object",
-            "properties": {
-                "create": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "useExistingRole": {
-                    "type": "string"
-                },
-                "useClusterRole": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "extraRules": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    },
-                    "default": []
-                }
-            }
-        },
-        "securityContext": {
-            "description": "Pod security context (legacy).",
-            "$ref": "#/definitions/securityContext"
-        },
-        "podSecurityContext": {
-            "description": "Pod security context.",
-            "$ref": "#/definitions/podSecurityContext"
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "containerSecurityContext": {
-            "description": "Container security context.",
-            "$ref": "#/definitions/containerSecurityContext"
-        },
-        "service": {
-            "description": "Service configuration.",
-            "type": "object",
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"],
-                    "default": "ClusterIP"
-                },
-                "port": {
-                    "type": "integer",
-                    "default": 8080
-                },
-                "telemetryPort": {
-                    "type": "integer",
-                    "default": 8081
-                },
-                "metricsPath": {
-                    "type": "string",
-                    "default": "/metrics"
-                },
-                "annotations": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "labels": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "clusterIP": {
-                    "type": "string",
-                    "default": ""
-                },
-                "loadBalancerIP": {
-                    "type": "string",
-                    "default": ""
-                },
-                "loadBalancerSourceRanges": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "default": []
-                },
-                "nodePort": {
-                    "type": "integer",
-                    "default": 0
-                },
-                "ipDualStack": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "ipFamilies": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "enum": ["IPv4", "IPv6"]
-                            },
-                            "default": ["IPv6", "IPv4"]
-                        },
-                        "ipFamilyPolicy": {
-                            "type": "string",
-                            "enum": ["SingleStack", "PreferDualStack", "RequireDualStack"],
-                            "default": "PreferDualStack"
-                        }
-                    }
+          "type": "object",
+          "properties": {
+            "readOnlyRootFilesystem": {
+              "type": "boolean",
+              "default": true
+            },
+            "allowPrivilegeEscalation": {
+              "type": "boolean",
+              "default": false
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "drop": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [
+                    "ALL"
+                  ]
                 }
+              }
             }
+          }
         },
-        "hostNetwork": {
-            "description": "Use host network.",
-            "type": "boolean",
-            "default": false
-        },
-        "kubeRBACProxy": {
-            "description": "kube-rbac-proxy configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "image": {
-                    "type": "object",
-                    "properties": {
-                        "registry": {
-                            "type": "string",
-                            "default": "quay.io"
-                        },
-                        "repository": {
-                            "type": "string",
-                            "default": "brancz/kube-rbac-proxy"
-                        },
-                        "tag": {
-                            "type": "string",
-                            "default": "v0.19.1"
-                        },
-                        "pullPolicy": {
-                            "type": "string",
-                            "enum": ["Never", "IfNotPresent", "Always"],
-                            "default": "IfNotPresent"
-                        }
-                    }
-                },
-                "ignoreProbePaths": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "extraArgs": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "default": []
-                },
-                "containerSecurityContext": {
-                    "type": "object",
-                    "properties": {
-                        "readOnlyRootFilesystem": {
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "allowPrivilegeEscalation": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "capabilities": {
-                            "type": "object",
-                            "properties": {
-                                "drop": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "default": ["ALL"]
-                                }
-                            }
-                        }
-                    }
-                },
-                "proxyEndpointsPort": {
-                    "type": "integer",
-                    "default": 8888
-                },
-                "resources": {
-                    "$ref": "#/definitions/resources"
-                },
-                "volumeMounts": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    },
-                    "default": []
-                }
-            }
-        },
-        "env": {
-            "description": "Additional environment variables.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "networkPolicy": {
-            "description": "Network Policy configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "egress": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    },
-                    "default": []
-                },
-                "ingress": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    },
-                    "default": []
-                },
-                "podSelector": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "podDisruptionBudget": {
-            "description": "Pod Disruption Budget configuration.",
-            "type": "object",
-            "properties": {
-                "maxUnavailable": {
-                    "type": ["integer", "string"]
-                },
-                "minAvailable": {
-                    "type": ["integer", "string"]
-                }
-            }
-        },
-        "podAnnotations": {
-            "description": "Annotations to add to pods.",
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
-        "podLabels": {
-            "description": "Labels to add to pods.",
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
-        "nodeSelector": {
-            "description": "Node selector for pod assignment.",
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
-        "affinity": {
-            "description": "Affinity rules for pod assignment.",
-            "type": ["object", "string"]
-        },
-        "tolerations": {
-            "description": "Tolerations for pod assignment.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "topologySpreadConstraints": {
-            "description": "Topology spread constraints for pod assignment.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "priorityClassName": {
-            "description": "Priority class name.",
-            "type": "string",
-            "default": ""
-        },
-        "metricAllowlist": {
-            "description": "List of metrics to be exposed.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": []
-        },
-        "metricDenylist": {
-            "description": "List of metrics not to be enabled.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": []
-        },
-        "metricLabelsAllowlist": {
-            "description": "List of additional Kubernetes label keys.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": []
-        },
-        "metricAnnotationsAllowList": {
-            "description": "List of Kubernetes annotations keys.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": []
-        },
-        "collectors": {
-            "description": "Available collectors for kube-state-metrics.",
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "default": [
-                "certificatesigningrequests",
-                "configmaps",
-                "cronjobs",
-                "daemonsets",
-                "deployments",
-                "endpoints",
-                "horizontalpodautoscalers",
-                "ingresses",
-                "jobs",
-                "leases",
-                "limitranges",
-                "mutatingwebhookconfigurations",
-                "namespaces",
-                "networkpolicies",
-                "nodes",
-                "persistentvolumeclaims",
-                "persistentvolumes",
-                "poddisruptionbudgets",
-                "pods",
-                "replicasets",
-                "replicationcontrollers",
-                "resourcequotas",
-                "secrets",
-                "services",
-                "statefulsets",
-                "storageclasses",
-                "validatingwebhookconfigurations",
-                "volumeattachments"
-            ]
-        },
-        "kubeconfig": {
-            "description": "Kubeconfig configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "secret": {
-                    "type": "string",
-                    "default": ""
-                }
-            }
-        },
-        "customResourceState": {
-            "description": "Custom Resource State configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "create": {
-                    "type": "boolean",
-                    "default": true
-                },
-                "name": {
-                    "type": "string",
-                    "default": ""
-                },
-                "key": {
-                    "type": "string",
-                    "default": "config.yaml"
-                },
-                "config": {
-                    "type": "object"
-                }
-            }
-        },
-        "releaseNamespace": {
-            "description": "Enable only the release namespace for collecting resources.",
-            "type": "boolean",
-            "default": false
-        },
-        "namespaces": {
-            "description": "Namespaces to be enabled for collecting resources.",
-            "type": "string",
-            "default": ""
-        },
-        "namespacesDenylist": {
-            "description": "Namespaces not to be enabled.",
-            "type": "string",
-            "default": ""
+        "proxyEndpointsPort": {
+          "type": "integer",
+          "default": 8888
         },
         "resources": {
-            "description": "Resource limits and requests for the pod.",
-            "$ref": "#/definitions/resources"
-        },
-        "selfMonitor": {
-            "description": "Self-monitoring configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "telemetryHost": {
-                    "type": "string",
-                    "default": "0.0.0.0"
-                },
-                "telemetryPort": {
-                    "type": "integer",
-                    "default": 8081
-                },
-                "telemetryNodePort": {
-                    "type": "integer",
-                    "default": 0
-                }
-            }
-        },
-        "verticalPodAutoscaler": {
-            "description": "Vertical Pod Autoscaler configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "recommenders": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
-                },
-                "controlledResources": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "maxAllowed": {
-                    "type": "object",
-                    "properties": {
-                        "cpu": {
-                            "type": "string"
-                        },
-                        "memory": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "minAllowed": {
-                    "type": "object",
-                    "properties": {
-                        "cpu": {
-                            "type": "string"
-                        },
-                        "memory": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "updatePolicy": {
-                    "type": "object",
-                    "properties": {
-                        "minReplicas": {
-                            "type": "integer"
-                        },
-                        "updateMode": {
-                            "type": "string",
-                            "enum": ["Off", "Initial", "Recreate", "Auto"]
-                        }
-                    }
-                }
-            }
+          "$ref": "#/definitions/resources"
         },
         "volumeMounts": {
-            "description": "Volume mounts for containers.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "volumes": {
-            "description": "Volumes for pods.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "containers": {
-            "description": "Extra containers to add to the pod.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "initContainers": {
-            "description": "Init containers to initialize the pod.",
-            "type": "array",
-            "items": {
-                "type": "object"
-            },
-            "default": []
-        },
-        "dnsPolicy": {
-            "description": "DNS policy for pods.",
-            "type": "string",
-            "default": "ClusterFirst"
-        },
-        "dnsConfig": {
-            "description": "DNS configuration for pods.",
+          "type": "array",
+          "items": {
             "type": "object"
-        },
-        "startupProbe": {
-            "description": "Startup probe configuration.",
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "failureThreshold": {
-                    "type": "integer",
-                    "default": 3
-                },
-                "httpGet": {
-                    "type": "object",
-                    "properties": {
-                        "httpHeaders": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            },
-                            "default": []
-                        },
-                        "scheme": {
-                            "type": "string",
-                            "enum": ["http", "https"],
-                            "default": "http"
-                        }
-                    }
-                },
-                "initialDelaySeconds": {
-                    "type": "integer",
-                    "default": 0
-                },
-                "periodSeconds": {
-                    "type": "integer",
-                    "default": 10
-                },
-                "successThreshold": {
-                    "type": "integer",
-                    "default": 1
-                },
-                "timeoutSeconds": {
-                    "type": "integer",
-                    "default": 5
-                }
-            }
-        },
-        "livenessProbe": {
-            "description": "Liveness probe configuration.",
-            "$ref": "#/definitions/probe"
-        },
-        "readinessProbe": {
-            "description": "Readiness probe configuration.",
-            "$ref": "#/definitions/probe"
-        },
-        "extraManifests": {
-            "description": "Extra manifests to deploy.",
-            "type": "array",
-            "items": {
-                "type": ["string", "object"]
-            },
-            "default": []
-        },
-        "prometheus": {
-            "description": "Prometheus monitoring configuration.",
-            "type": "object",
-            "properties": {
-                "monitor": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "annotations": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "additionalLabels": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "namespace": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "namespaceSelector": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        },
-                        "jobLabel": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "targetLabels": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "podTargetLabels": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "sampleLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "targetLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelNameLengthLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelValueLengthLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "selectorOverride": {
-                            "type": "object"
-                        },
-                        "http": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "scrapeTimeout": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "proxyUrl": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "enableHttp2": {
-                                    "type": "boolean",
-                                    "default": false
-                                },
-                                "honorLabels": {
-                                    "type": "boolean",
-                                    "default": false
-                                },
-                                "metricRelabelings": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object"
-                                    }
-                                },
-                                "relabelings": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object"
-                                    }
-                                },
-                                "scheme": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "bearerTokenFile": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "bearerTokenSecret": {
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "key": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "tlsConfig": {
-                                    "type": "object"
-                                }
-                            }
-                        },
-                        "metrics": {
-                            "type": "object",
-                            "properties": {
-                                "interval": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "scrapeTimeout": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "proxyUrl": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "enableHttp2": {
-                                    "type": "boolean",
-                                    "default": false
-                                },
-                                "honorLabels": {
-                                    "type": "boolean",
-                                    "default": false
-                                },
-                                "metricRelabelings": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object"
-                                    }
-                                },
-                                "relabelings": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object"
-                                    }
-                                },
-                                "scheme": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "bearerTokenFile": {
-                                    "type": "string",
-                                    "default": ""
-                                },
-                                "bearerTokenSecret": {
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "key": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "tlsConfig": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "scrapeconfig": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "annotations": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "additionalLabels": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "jobName": {
-                            "type": "string",
-                            "default": "kube-state-metrics"
-                        },
-                        "sampleLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "targetLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelNameLengthLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "labelValueLengthLimit": {
-                            "type": "integer",
-                            "default": 0
-                        },
-                        "staticConfigLabels": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "scrapeInterval": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "scrapeTimeout": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "proxyUrl": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "enableHttp2": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "honorLabels": {
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "metricRelabelings": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        },
-                        "relabelings": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        },
-                        "scheme": {
-                            "type": "string",
-                            "default": ""
-                        },
-                        "tlsConfig": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
+          },
+          "default": []
         }
+      }
     },
-    "additionalProperties": false
+    "env": {
+      "description": "Additional environment variables.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "networkPolicy": {
+      "description": "Network Policy configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "egress": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "ingress": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": []
+        },
+        "podSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "podDisruptionBudget": {
+      "description": "Pod Disruption Budget configuration.",
+      "type": "object",
+      "properties": {
+        "maxUnavailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "minAvailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      }
+    },
+    "podAnnotations": {
+      "description": "Annotations to add to pods.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "podLabels": {
+      "description": "Labels to add to pods.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "nodeSelector": {
+      "description": "Node selector for pod assignment.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "affinity": {
+      "description": "Affinity rules for pod assignment.",
+      "type": [
+        "object",
+        "string"
+      ]
+    },
+    "tolerations": {
+      "description": "Tolerations for pod assignment.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "topologySpreadConstraints": {
+      "description": "Topology spread constraints for pod assignment.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "priorityClassName": {
+      "description": "Priority class name.",
+      "type": "string",
+      "default": ""
+    },
+    "metricAllowlist": {
+      "description": "List of metrics to be exposed.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "metricDenylist": {
+      "description": "List of metrics not to be enabled.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "metricLabelsAllowlist": {
+      "description": "List of additional Kubernetes label keys.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "metricAnnotationsAllowList": {
+      "description": "List of Kubernetes annotations keys.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "collectors": {
+      "description": "Available collectors for kube-state-metrics.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "certificatesigningrequests",
+        "configmaps",
+        "cronjobs",
+        "daemonsets",
+        "deployments",
+        "endpoints",
+        "horizontalpodautoscalers",
+        "ingresses",
+        "jobs",
+        "leases",
+        "limitranges",
+        "mutatingwebhookconfigurations",
+        "namespaces",
+        "networkpolicies",
+        "nodes",
+        "persistentvolumeclaims",
+        "persistentvolumes",
+        "poddisruptionbudgets",
+        "pods",
+        "replicasets",
+        "replicationcontrollers",
+        "resourcequotas",
+        "secrets",
+        "services",
+        "statefulsets",
+        "storageclasses",
+        "validatingwebhookconfigurations",
+        "volumeattachments"
+      ]
+    },
+    "kubeconfig": {
+      "description": "Kubeconfig configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "secret": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "customResourceState": {
+      "description": "Custom Resource State configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "create": {
+          "type": "boolean",
+          "default": true
+        },
+        "name": {
+          "type": "string",
+          "default": ""
+        },
+        "key": {
+          "type": "string",
+          "default": "config.yaml"
+        },
+        "config": {
+          "type": "object"
+        }
+      }
+    },
+    "releaseNamespace": {
+      "description": "Enable only the release namespace for collecting resources.",
+      "type": "boolean",
+      "default": false
+    },
+    "namespaces": {
+      "description": "Namespaces to be enabled for collecting resources.",
+      "type": "string",
+      "default": ""
+    },
+    "namespacesDenylist": {
+      "description": "Namespaces not to be enabled.",
+      "type": "string",
+      "default": ""
+    },
+    "resources": {
+      "description": "Resource limits and requests for the pod.",
+      "$ref": "#/definitions/resources"
+    },
+    "selfMonitor": {
+      "description": "Self-monitoring configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "telemetryHost": {
+          "type": "string",
+          "default": "0.0.0.0"
+        },
+        "telemetryPort": {
+          "type": "integer",
+          "default": 8081
+        },
+        "telemetryNodePort": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
+    "verticalPodAutoscaler": {
+      "description": "Vertical Pod Autoscaler configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "recommenders": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "controlledResources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxAllowed": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
+          }
+        },
+        "minAllowed": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
+          }
+        },
+        "updatePolicy": {
+          "type": "object",
+          "properties": {
+            "minReplicas": {
+              "type": "integer"
+            },
+            "updateMode": {
+              "type": "string",
+              "enum": [
+                "Off",
+                "Initial",
+                "Recreate",
+                "Auto"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "volumeMounts": {
+      "description": "Volume mounts for containers.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "volumes": {
+      "description": "Volumes for pods.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "containers": {
+      "description": "Extra containers to add to the pod.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "initContainers": {
+      "description": "Init containers to initialize the pod.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": []
+    },
+    "dnsPolicy": {
+      "description": "DNS policy for pods.",
+      "type": "string",
+      "default": "ClusterFirst"
+    },
+    "dnsConfig": {
+      "description": "DNS configuration for pods.",
+      "type": "object"
+    },
+    "startupProbe": {
+      "description": "Startup probe configuration.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "default": 3
+        },
+        "httpGet": {
+          "type": "object",
+          "properties": {
+            "httpHeaders": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "default": []
+            },
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "http",
+                "https"
+              ],
+              "default": "http"
+            }
+          }
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "default": 0
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "default": 10
+        },
+        "successThreshold": {
+          "type": "integer",
+          "default": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 5
+        }
+      }
+    },
+    "livenessProbe": {
+      "description": "Liveness probe configuration.",
+      "$ref": "#/definitions/probe"
+    },
+    "readinessProbe": {
+      "description": "Readiness probe configuration.",
+      "$ref": "#/definitions/probe"
+    },
+    "extraManifests": {
+      "description": "Extra manifests to deploy.",
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "object"
+        ]
+      },
+      "default": []
+    },
+    "prometheus": {
+      "description": "Prometheus monitoring configuration.",
+      "type": "object",
+      "properties": {
+        "monitor": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "additionalLabels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "namespace": {
+              "type": "string",
+              "default": ""
+            },
+            "namespaceSelector": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "jobLabel": {
+              "type": "string",
+              "default": ""
+            },
+            "targetLabels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "podTargetLabels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sampleLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "targetLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelNameLengthLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelValueLengthLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "selectorOverride": {
+              "type": "object"
+            },
+            "http": {
+              "type": "object",
+              "properties": {
+                "interval": {
+                  "type": "string",
+                  "default": ""
+                },
+                "scrapeTimeout": {
+                  "type": "string",
+                  "default": ""
+                },
+                "proxyUrl": {
+                  "type": "string",
+                  "default": ""
+                },
+                "enableHttp2": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "honorLabels": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "metricRelabelings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "relabelings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "scheme": {
+                  "type": "string",
+                  "default": ""
+                },
+                "bearerTokenFile": {
+                  "type": "string",
+                  "default": ""
+                },
+                "bearerTokenSecret": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "tlsConfig": {
+                  "type": "object"
+                }
+              }
+            },
+            "metrics": {
+              "type": "object",
+              "properties": {
+                "interval": {
+                  "type": "string",
+                  "default": ""
+                },
+                "scrapeTimeout": {
+                  "type": "string",
+                  "default": ""
+                },
+                "proxyUrl": {
+                  "type": "string",
+                  "default": ""
+                },
+                "enableHttp2": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "honorLabels": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "metricRelabelings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "relabelings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "scheme": {
+                  "type": "string",
+                  "default": ""
+                },
+                "bearerTokenFile": {
+                  "type": "string",
+                  "default": ""
+                },
+                "bearerTokenSecret": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "tlsConfig": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "scrapeconfig": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "additionalLabels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "jobName": {
+              "type": "string",
+              "default": "kube-state-metrics"
+            },
+            "sampleLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "targetLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelNameLengthLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "labelValueLengthLimit": {
+              "type": "integer",
+              "default": 0
+            },
+            "staticConfigLabels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "scrapeInterval": {
+              "type": "string",
+              "default": ""
+            },
+            "scrapeTimeout": {
+              "type": "string",
+              "default": ""
+            },
+            "proxyUrl": {
+              "type": "string",
+              "default": ""
+            },
+            "enableHttp2": {
+              "type": "boolean",
+              "default": false
+            },
+            "honorLabels": {
+              "type": "boolean",
+              "default": true
+            },
+            "metricRelabelings": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "relabelings": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "scheme": {
+              "type": "string",
+              "default": ""
+            },
+            "tlsConfig": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "testFramework": {
+      "description": "Configuration for testFramework.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Specifies whether testFramework is enabled.",
+          "type": "boolean",
+          "default": false
+        },
+        "annotations": {
+          "description": "Annotations to be added to testFramework.",
+          "type": "object"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
 }

@@ -586,3 +586,9 @@ prometheus:
     relabelings: []
     scheme: ""
     tlsConfig: {}
+
+testFramework:
+  enabled: false
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-creation,hook-succeeded
