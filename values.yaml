@@ -33,13 +33,11 @@ prometheusScrape:
 autosharding:
   enabled: false
 
-deployment:
-  annotations: {}
-  labels: {}
+# Annotations to be added to the deployment/statefulset
+annotations: {}
 
-statefulSet:
-  annotations: {}
-  labels: {}
+# Labels to be added to the deployment/statefulset
+labels: {}
 
 # Options: OrderedReady, Parallel
 # - OrderedReady: Pods are created in order (0, 1, 2) and must be ready before next starts
@@ -78,18 +76,32 @@ serviceAccount:
   # Use case: AWS EKS IAM roles for service accounts
   # ref: https://docs.aws.amazon.com/eks/latest/userguide/specify-service-account-role.html
   annotations: {}
-  # RBAC configuration for minimal required permissions
-  rbac:
-    # Specifies whether RBAC resources should be created
-    create: true
-    # If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)
-    useClusterRole: true
-    # Add permissions for CustomResources' apiGroups in Role/ClusterRole. Should be used in conjunction with Custom Resource State Metrics configuration
-    # Example:
-    # - apiGroups: ["monitoring.coreos.com"]
-    #   resources: ["prometheuses"]
-    #   verbs: ["list", "watch"]
-    extraRules: []
+
+rbac:
+  # If true, create & use RBAC resources
+  create: true
+
+  # Set to a rolename to use existing role - skipping role creating - but still doing serviceaccount and rolebinding to it, rolename set here.
+  # useExistingRole: your-existing-role
+
+  # If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)
+  useClusterRole: true
+
+  # Add permissions for CustomResources' apiGroups in Role/ClusterRole. Should be used in conjunction with Custom Resource State Metrics configuration
+  # Example:
+  # - apiGroups: ["monitoring.coreos.com"]
+  #   resources: ["prometheuses"]
+  #   verbs: ["list", "watch"]
+  extraRules: []
+
+securityContext:
+  enabled: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
 
 # Pod Security Context
 podSecurityContext:
@@ -103,14 +115,15 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
-securityContext:
+# Container Security Context
+containerSecurityContext:
   enabled: true
-  readOnlyRootFilesystem: true
-  # Drop all capabilities and prevent privilege escalation
-  allowPrivilegeEscalation: false
   runAsNonRoot: true
   runAsUser: 1000
   runAsGroup: 1000
+  readOnlyRootFilesystem: true
+  # Drop all capabilities and prevent privilege escalation
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
       - ALL
@@ -144,12 +157,18 @@ kubeRBACProxy:
   image:
     registry: quay.io
     repository: brancz/kube-rbac-proxy
-    tag: v0.20.0
+    tag: v0.19.1
     pullPolicy: IfNotPresent
   # This set --ignore-paths=/livez,/readyz to kubeRBACProxy container args
   # to allow the pod probes working properly with kubeRBACProxy enabled.
   ignoreProbePaths: true
+  # List of additional cli arguments to configure kube-rbac-prxy
+  # for example: --tls-cipher-suites, --log-file, etc.
+  # all the possible args can be found here: https://github.com/brancz/kube-rbac-proxy#usage
   extraArgs: []
+  ## Specify security settings for a Container
+  ## Allows overrides and additional options compared to (Pod) securityContext
+  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   containerSecurityContext:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
@@ -404,16 +423,6 @@ initContainers: []
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
 dnsPolicy: ClusterFirst
 
-## Specify security settings for a Container
-## Allows overrides and additional options compared to (Pod) securityContext
-## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-containerSecurityContext:
-  readOnlyRootFilesystem: true
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-
 ## Settings for startup, liveness and readiness probes
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ##
@@ -464,7 +473,6 @@ extraManifests: []
   #     name: prometheus-extra
   #   data:
   #     extra-data: "value"
-
 
 prometheus:
   monitor:

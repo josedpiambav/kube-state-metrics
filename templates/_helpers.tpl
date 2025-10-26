@@ -74,43 +74,83 @@ Allow the release namespace to be overridden for multi-namespace deployments in 
   {{- end -}}
 {{- end -}}
 
+{{/*
+kube-state-metrics.podSecurityContext: Returns the pod security context
+*/}}
+{{- define "kube-state-metrics.podSecurityContext" -}}
+  {{- if .Values.podSecurityContext -}}
+    {{- with .Values.podSecurityContext }}
+      {{- if .enabled }}
+        fsGroup: {{ .fsGroup | default 1000 }}
+        runAsGroup: {{ .runAsGroup | default 1000 }}
+        runAsNonRoot: {{ .runAsNonRoot | default true }}
+        runAsUser: {{ .runAsUser | default 1000 }}
+        {{- if .fsGroupChangePolicy }}
+        fsGroupChangePolicy: {{ .fsGroupChangePolicy }}
+        {{- end }}
+        {{- if .seccompProfile }}
+        seccompProfile:
+          {{ toYaml .seccompProfile | nindent 2 }}
+        {{- end }}
+      {{- else }}
+        {{- /* Fallback to securityContext for backward compatibility */}}
+        {{- if .Values.securityContext }}
+          fsGroup: {{ .Values.securityContext.fsGroup | default 65534 }}
+          runAsGroup: {{ .Values.securityContext.runAsGroup | default 65534 }}
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot | default true }}
+          runAsUser: {{ .Values.securityContext.runAsUser | default 65534 }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 
-{{/* Sets default scrape limits for servicemonitor */}}
-{{- define "servicemonitor.scrapeLimits" -}}
-{{- with .sampleLimit }}
-sampleLimit: {{ . }}
+{{/*
+kube-state-metrics.containerSecurityContext: Returns the container security context
+*/}}
+{{- define "kube-state-metrics.containerSecurityContext" -}}
+  {{- if .Values.containerSecurityContext -}}
+    {{- with .Values.containerSecurityContext }}
+      {{- if .enabled }}
+        allowPrivilegeEscalation: {{ .allowPrivilegeEscalation | default false }}
+        readOnlyRootFilesystem: {{ .readOnlyRootFilesystem | default true }}
+        runAsNonRoot: {{ .runAsNonRoot | default true }}
+        runAsUser: {{ .runAsUser | default 1000 }}
+        {{- if .capabilities }}
+        capabilities:
+        {{ toYaml .capabilities | nindent 2 }}
+        {{- else }}
+        capabilities:
+          drop:
+          - ALL
+        {{- end }}
+        {{- if .seccompProfile }}
+        seccompProfile:
+        {{ toYaml .seccompProfile | nindent 2 }}
+        {{- end }}
+      {{- end }}
+    {{- else }}
+      {{- /* Fallback values */}}
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 65534
+      capabilities:
+        drop:
+        - ALL
+    {{- end }}
 {{- end }}
-{{- with .targetLimit }}
-targetLimit: {{ . }}
-{{- end }}
-{{- with .labelLimit }}
-labelLimit: {{ . }}
-{{- end }}
-{{- with .labelNameLengthLimit }}
-labelNameLengthLimit: {{ . }}
-{{- end }}
-{{- with .labelValueLengthLimit }}
-labelValueLengthLimit: {{ . }}
-{{- end }}
-{{- end -}}
 
-{{/* Sets default scrape limits for scrapeconfig */}}
-{{- define "scrapeconfig.scrapeLimits" -}}
-{{- with .sampleLimit }}
-sampleLimit: {{ . }}
-{{- end }}
-{{- with .targetLimit }}
-targetLimit: {{ . }}
-{{- end }}
-{{- with .labelLimit }}
-labelLimit: {{ . }}
-{{- end }}
-{{- with .labelNameLengthLimit }}
-labelNameLengthLimit: {{ . }}
-{{- end }}
-{{- with .labelValueLengthLimit }}
-labelValueLengthLimit: {{ . }}
-{{- end }}
+{{/*
+Formats imagePullSecrets. Input is (dict "Values" .Values "imagePullSecrets" .{specific imagePullSecrets})
+*/}}
+{{- define "kube-state-metrics.imagePullSecrets" -}}
+  {{- range .imagePullSecrets }}
+    {{- if eq (typeOf .) "map[string]interface {}" }}
+  - {{ toYaml . | trim }}
+    {{- else }}
+  - name: {{ . }}
+    {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -128,15 +168,46 @@ The image to use for kubeRBACProxy
 {{- end }}
 
 {{/*
-The name of the ConfigMap for the customResourceState config.
+Sets default scrape limits for servicemonitor
 */}}
-{{- define "kube-state-metrics.crsConfigMapName" -}}
-  {{- if ne .Values.customResourceState.name "" }}
-    {{- .Values.customResourceState.name }}
-  {{- else }}
-    {{- template "kube-state-metrics.fullname" . }}-customresourcestate-config
+{{- define "servicemonitor.scrapeLimits" -}}
+  {{- with .sampleLimit }}
+  sampleLimit: {{ . }}
   {{- end }}
-{{- end }}
+  {{- with .targetLimit }}
+  targetLimit: {{ . }}
+  {{- end }}
+  {{- with .labelLimit }}
+  labelLimit: {{ . }}
+  {{- end }}
+  {{- with .labelNameLengthLimit }}
+  labelNameLengthLimit: {{ . }}
+  {{- end }}
+  {{- with .labelValueLengthLimit }}
+  labelValueLengthLimit: {{ . }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Sets default scrape limits for scrapeconfig
+*/}}
+{{- define "scrapeconfig.scrapeLimits" -}}
+  {{- with .sampleLimit }}
+  sampleLimit: {{ . }}
+  {{- end }}
+  {{- with .targetLimit }}
+  targetLimit: {{ . }}
+  {{- end }}
+  {{- with .labelLimit }}
+  labelLimit: {{ . }}
+  {{- end }}
+  {{- with .labelNameLengthLimit }}
+  labelNameLengthLimit: {{ . }}
+  {{- end }}
+  {{- with .labelValueLengthLimit }}
+  labelValueLengthLimit: {{ . }}
+  {{- end }}
+{{- end -}}
 
 {{/*
 Return the proper Prometheus Scrape Annotations
@@ -159,3 +230,14 @@ Return the proper Prometheus Scrape Labels
   {{- end }}
   {{- end }}
 {{- end -}}
+
+{{/*
+The name of the ConfigMap for the customResourceState config.
+*/}}
+{{- define "kube-state-metrics.crsConfigMapName" -}}
+  {{- if ne .Values.customResourceState.name "" }}
+    {{- .Values.customResourceState.name }}
+  {{- else }}
+    {{- template "kube-state-metrics.fullname" . }}-customresourcestate-config
+  {{- end }}
+{{- end }}

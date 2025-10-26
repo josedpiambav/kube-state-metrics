@@ -5,10 +5,6 @@ metadata:
   name: {{ include "kube-state-metrics.fullname" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | indent 4 }}
-  {{- if .Values.annotations }}
-  annotations:
-    {{ toYaml .Values.annotations | nindent 4 }}
-  {{- end }}
   namespace: {{ include "kube-state-metrics.namespace" . }}
 spec:
   {{- if .Values.networkPolicy.egress }}
