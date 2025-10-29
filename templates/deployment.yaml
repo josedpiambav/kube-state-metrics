@@ -1,6 +1,9 @@
-{{- if not .Values.autosharding.enabled }}
 apiVersion: apps/v1
+{{- if .Values.autosharding.enabled }}
+kind: StatefulSet
+{{- else }}
 kind: Deployment
+{{- end }}
 metadata:
   name: {{ template "kube-state-metrics.fullname" . }}
   namespace: {{ template "kube-state-metrics.namespace" . }}
@@ -17,37 +20,37 @@ spec:
   selector:
     matchLabels:
       {{- include "kube-state-metrics.selectorLabels" . | indent 6 }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
+  {{- if not .Values.autosharding.enabled }}
   strategy:
     type: {{ .Values.updateStrategy | default "RollingUpdate" }}
+  {{- end }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- if .Values.autosharding.enabled }}
+  serviceName: {{ template "kube-state-metrics.fullname" . }}
+  volumeClaimTemplates: []
+  {{- end }}
   template:
     metadata:
       labels:
-        {{- include "kube-state-metrics.labels" . | nindent 8 }}
+        {{- include "kube-state-metrics.labels" . | indent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- include "kube-state-metrics.prometheusScrapeLabels" . | nindent 4 }}
+      {{- if .Values.podAnnotations }}
       annotations:
-        {{- include "kube-state-metrics.prometheusScrapeAnnotations" . | nindent 4 }}
-        {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{ toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
-      serviceAccount.automount: {{ .Values.serviceAccount.automount }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       hostNetwork: {{ .Values.hostNetwork }}
       serviceAccountName: {{ template "kube-state-metrics.serviceAccountName" . }}
-      {{- if .Values.podSecurityContext.enabled }}
-      securityContext:
-        {{- include "kube-state-metrics.podSecurityContext" . | nindent 8 }}
-      {{- else if .Values.securityContext.enabled }}
+      {{- if .Values.securityContext.enabled }}
       securityContext: {{- omit .Values.securityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
-      {{- include "kube-state-metrics.imagePullSecrets" . | nindent 8 }}
-      {{- if .Values.priorityClassName }}
+    {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
-      {{- end }}
+    {{- end }}
       {{- with .Values.initContainers }}
       initContainers:
       {{- toYaml . | nindent 6 }}
@@ -60,9 +63,24 @@ spec:
       {{- $servicePort := ternary 9090 (.Values.service.port | default 8080) .Values.kubeRBACProxy.enabled}}
       {{- $telemetryPort := ternary 9091 (.Values.selfMonitor.telemetryPort | default 8081) .Values.kubeRBACProxy.enabled}}
       - name: {{ template "kube-state-metrics.name" . }}
+        {{- if  .Values.autosharding.enabled }}
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        {{- if .Values.env }}
+        {{- toYaml .Values.env | nindent 8 }}
+        {{- end }}
+        {{ else }}
         {{- if .Values.env }}
         env:
         {{- toYaml .Values.env | nindent 8 }}
+        {{- end }}
         {{- end }}
         args:
         {{-  if .Values.extraArgs  }}
@@ -102,6 +120,10 @@ spec:
         {{- if .Values.namespacesDenylist }}
         - --namespaces-denylist={{ tpl (.Values.namespacesDenylist | join ",") $ }}
         {{- end }}
+        {{- if .Values.autosharding.enabled }}
+        - --pod=$(POD_NAME)
+        - --pod-namespace=$(POD_NAMESPACE)
+        {{- end }}
         {{- if .Values.kubeconfig.enabled }}
         - --kubeconfig=/opt/k8s/.kube/config
         {{- end }}
@@ -132,7 +154,7 @@ spec:
           readOnly: true
         {{- end }}
         {{- if .Values.volumeMounts }}
-        {{ toYaml .Values.volumeMounts | nindent 8 }}
+{{ toYaml .Values.volumeMounts | indent 8 }}
         {{- end }}
         {{- end }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -218,14 +240,11 @@ spec:
           successThreshold: {{ .Values.readinessProbe.successThreshold }}
           timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
         resources:
-          {{ toYaml .Values.resources | nindent 10 }}
-        {{- if .Values.containerSecurityContext.enabled }}
+{{ toYaml .Values.resources | indent 10 }}
+{{- if .Values.containerSecurityContext }}
         securityContext:
-          {{- include "kube-state-metrics.containerSecurityContext" . | nindent 10 }}
-        {{- else if .Values.containerSecurityContext }}
-        securityContext:
-        {{ toYaml .Values.containerSecurityContext | nindent 10 }}
-        {{- end }}
+{{ toYaml .Values.containerSecurityContext | indent 10 }}
+{{- end }}
         {{-  if .Values.kubeRBACProxy.enabled  }}
       - name: kube-rbac-proxy-http
         args:
@@ -261,15 +280,12 @@ spec:
           timeoutSeconds: 5
         {{- if .Values.kubeRBACProxy.resources }}
         resources:
-        {{ toYaml .Values.kubeRBACProxy.resources | nindent 10 }}
-        {{- end }}
-        {{- if .Values.containerSecurityContext.enabled }}
+{{ toYaml .Values.kubeRBACProxy.resources | indent 10 }}
+{{- end }}
+{{- if .Values.kubeRBACProxy.containerSecurityContext }}
         securityContext:
-          {{- include "kube-state-metrics.containerSecurityContext" . | nindent 10 }}
-        {{- else if .Values.kubeRBACProxy.containerSecurityContext }}
-        securityContext:
-        {{ toYaml .Values.kubeRBACProxy.containerSecurityContext | nindent 10 }}
-        {{- end }}
+{{ toYaml .Values.kubeRBACProxy.containerSecurityContext | indent 10 }}
+{{- end }}
       {{-  if .Values.selfMonitor.enabled  }}
       - name: kube-rbac-proxy-telemetry
         args:
@@ -305,19 +321,20 @@ spec:
           timeoutSeconds: 5
         {{- if .Values.kubeRBACProxy.resources }}
         resources:
-        {{ toYaml .Values.kubeRBACProxy.resources | nindent 10 }}
-        {{- end }}
-        {{- if .Values.containerSecurityContext.enabled }}
+{{ toYaml .Values.kubeRBACProxy.resources | indent 10 }}
+{{- end }}
+{{- if .Values.kubeRBACProxy.containerSecurityContext }}
         securityContext:
-          {{- include "kube-state-metrics.containerSecurityContext" . | nindent 10 }}
-        {{- else if .Values.kubeRBACProxy.containerSecurityContext }}
-        securityContext:
-        {{ toYaml .Values.kubeRBACProxy.containerSecurityContext | nindent 10 }}
-        {{- end }}
+{{ toYaml .Values.kubeRBACProxy.containerSecurityContext | indent 10 }}
+{{- end }}
       {{- end }}
       {{- end }}
       {{- with .Values.containers }}
       {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- include "kube-state-metrics.imagePullSecrets" (dict "Values" .Values "imagePullSecrets" .Values.imagePullSecrets) | indent 8 }}
       {{- end }}
       {{- if .Values.affinity }}
       affinity:
@@ -329,15 +346,15 @@ spec:
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
-      {{ tpl (toYaml .) $ | nindent 8 }}
+{{ tpl (toYaml .) $ | indent 8 }}
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
-      {{ tpl (toYaml .) $ | nindent 8 }}
+{{ tpl (toYaml .) $ | indent 8 }}
       {{- end }}
       {{- if .Values.topologySpreadConstraints }}
       topologySpreadConstraints:
-      {{ toYaml .Values.topologySpreadConstraints | nindent 8 }}
+{{ toYaml .Values.topologySpreadConstraints | indent 8 }}
       {{- end }}
       {{- if or (.Values.kubeconfig.enabled) (.Values.customResourceState.enabled) (.Values.volumes) (.Values.kubeRBACProxy.enabled) }}
       volumes:
@@ -357,7 +374,6 @@ spec:
             name: {{ template "kube-state-metrics.crsConfigMapName" . }}
       {{- end }}
       {{- if .Values.volumes }}
-      {{ toYaml .Values.volumes | nindent 8 }}
+{{ toYaml .Values.volumes | indent 8 }}
       {{- end }}
       {{- end }}
-{{- end }}

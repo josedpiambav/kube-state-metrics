@@ -2,10 +2,10 @@
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "kube-state-metrics.fullname" . }}
+  name: {{ template "kube-state-metrics.fullname" . }}
+  namespace: {{ template "kube-state-metrics.namespace" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | indent 4 }}
-  namespace: {{ include "kube-state-metrics.namespace" . }}
 spec:
   {{- with .Values.verticalPodAutoscaler.recommenders }}
   recommenders:
@@ -13,7 +13,7 @@ spec:
   {{- end }}
   resourcePolicy:
     containerPolicies:
-    - containerName: {{ include "kube-state-metrics.name" . }}
+    - containerName: {{ template "kube-state-metrics.name" . }}
       {{- with .Values.verticalPodAutoscaler.controlledResources }}
       controlledResources:
         {{- toYaml . | nindent 8 }}
@@ -36,7 +36,7 @@ spec:
     {{- else }}
     kind: Deployment
     {{- end }}
-    name:  {{ include "kube-state-metrics.fullname" . }}
+    name:  {{ template "kube-state-metrics.fullname" . }}
   {{- with .Values.verticalPodAutoscaler.updatePolicy }}
   updatePolicy:
     {{- toYaml . | nindent 4 }}

@@ -1,27 +1,29 @@
-apiVersion: v2
-name: kube-state-metrics
-description: |
-  The Alertmanager handles alerts sent by client applications such as the Prometheus server
-  
-  Base Helm Chart:
-  - Name: kube-state-metrics
-  - Repository: prometheus-community https://prometheus-community.github.io/helm-charts
-  - Version: 6.4.0
-  - Source: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
-home: https://github.com/kubernetes/kube-state-metrics/
-sources:
-  - https://github.com/kubernetes/kube-state-metrics/
-type: application
-version: 0.0.1
-appVersion: 2.17.0
-kubeVersion: ">=1.25.0-0"
-keywords:
-  - monitoring
-maintainers:
-  - name: Jose Piamba
-    email: jose.piamba@gaiavation.com
 annotations:
-  "artifacthub.io/license": Apache-2.0
-  "artifacthub.io/links": |
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
     - name: Chart Source
       url: https://github.com/prometheus-community/helm-charts
+apiVersion: v2
+appVersion: 2.17.0
+description: Install kube-state-metrics to generate and expose cluster-level metrics
+home: https://github.com/kubernetes/kube-state-metrics/
+keywords:
+- metric
+- monitoring
+- prometheus
+- kubernetes
+maintainers:
+- email: tariq.ibrahim@mulesoft.com
+  name: tariq1890
+  url: https://github.com/tariq1890
+- email: manuel@rueg.eu
+  name: mrueg
+  url: https://github.com/mrueg
+- email: david@0xdc.me
+  name: dotdc
+  url: https://github.com/dotdc
+name: kube-state-metrics
+sources:
+- https://github.com/kubernetes/kube-state-metrics/
+type: application
+version: 6.3.0

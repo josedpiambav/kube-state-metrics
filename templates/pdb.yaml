@@ -2,13 +2,13 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "kube-state-metrics.fullname" . }}
+  name: {{ template "kube-state-metrics.fullname" . }}
+  namespace: {{ template "kube-state-metrics.namespace" . }}
   labels:
     {{- include "kube-state-metrics.labels" . | indent 4 }}
-  namespace: {{ include "kube-state-metrics.namespace" . }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "kube-state-metrics.name" . }}
+      app.kubernetes.io/name: {{ template "kube-state-metrics.name" . }}
 {{ toYaml .Values.podDisruptionBudget | indent 2 }}
 {{- end -}}

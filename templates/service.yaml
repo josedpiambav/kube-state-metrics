@@ -1,18 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "kube-state-metrics.fullname" . }}
-  namespace: {{ include "kube-state-metrics.namespace" . }}
+  name: {{ template "kube-state-metrics.fullname" . }}
+  namespace: {{ template "kube-state-metrics.namespace" . }}
   labels:
-    {{- include "kube-state-metrics.labels" . | nindent 4 }}
-    {{- include "kube-state-metrics.prometheusScrapeLabels" . | nindent 4 }}
-    {{- with .Values.service.labels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "kube-state-metrics.labels" . | indent 4 }}
   annotations:
-    {{- include "kube-state-metrics.prometheusScrapeAnnotations" . | nindent 4 }}
-    {{- with .Values.service.annotations }}
-    {{- toYaml . | nindent 4 }}
+    {{- if .Values.prometheusScrape }}
+    prometheus.io/scrape: '{{ .Values.prometheusScrape }}'
+    {{- end }}
+    {{- if .Values.service.annotations }}
+    {{- toYaml .Values.service.annotations | nindent 4 }}
     {{- end }}
 spec:
   type: "{{ .Values.service.type }}"
